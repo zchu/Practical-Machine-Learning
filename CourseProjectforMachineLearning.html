@@ -112,7 +112,7 @@ dim(training_clean)</code></pre>
 <pre class="r"><code>inTrain &lt;- createDataPartition(training_clean$classe, p = 0.75, list = FALSE)
 training &lt;- training_clean[inTrain, ]
 testing &lt;- training_clean[-inTrain, ]</code></pre>
-<p>Model Selection: This project is to predict “Classe”, which is a categorical factor. And we need a very high accuracy according to the <a href="https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-requiredModelAccuracy.md">required model accuracy for Course project</a>. Random forrest usually have very high accuracy and is natually suitable for factor variable. Therefore we chose random forest as our method. However, the average running time is very slow.</p>
+<p>Model Selection: This project is to predict “Classe”, which is a categorical factor. And we need a very high accuracy according to the <a href="https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-requiredModelAccuracy.md">required model accuracy for Course project</a> and we want the out of sample error to be less than 0.01. Random forrest usually have very high accuracy and is natually suitable for factor variable. Therefore we chose random forest as our method. However, the average running time is very slow.</p>
 <p>To help run the model, we used parellel library as discussed in the course forum. <a href="https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md">Improving Performance of Random Forest in caret::train()</a>. We also used a beep function to remind us when it finished and monitor the time it used.</p>
 <pre class="r"><code>library(beepr)
 set.seed(1)
@@ -158,7 +158,7 @@ beep()</code></pre>
 <p>The total run time for building the random forest model is:</p>
 <pre class="r"><code>usedtime</code></pre>
 <pre><code>##     user   system  elapsed 
-##   53.113    1.168 1117.128</code></pre>
+##   53.216    1.129 1191.861</code></pre>
 <p>The final model is as below:</p>
 <pre class="r"><code>modFit</code></pre>
 <pre><code>## Random Forest 
@@ -227,7 +227,7 @@ table(pred, testing$classe)</code></pre>
 ## Detection Rate         0.2845   0.1919   0.1729   0.1627   0.1837
 ## Detection Prevalence   0.2845   0.1935   0.1743   0.1639   0.1837
 ## Balanced Accuracy      0.9986   0.9969   0.9939   0.9974   0.9994</code></pre>
-<p>The overall accuracy is about 0.9943.</p>
+<p>The overall accuracy is about 0.9957, the out of sample error is 0.0043, which is less than 0.01.</p>
 </div>
 <div id="apply-this-model-to-predict-the-new-data" class="section level2">
 <h2>Apply this model to predict the new data</h2>
@@ -238,6 +238,10 @@ final_pred &lt;- predict(modFit, final_testing)
 final_pred</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>This model correctly predicted all the 20 testing cases.</p>
 </div>
 
 

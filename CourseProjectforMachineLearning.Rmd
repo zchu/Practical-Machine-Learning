@@ -2,7 +2,7 @@
 title: "Practical Machine Learning Course Project"
 author: "Zhengguo Chu"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output: pdf_document
 ---
 ## Synopsis
 
@@ -56,7 +56,7 @@ training <- training_clean[inTrain, ]
 testing <- training_clean[-inTrain, ]
 ```
 
-Model Selection: This project is to predict "Classe", which is a categorical factor. And we need a very high accuracy according to the [required model accuracy for Course project](https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-requiredModelAccuracy.md). Random forrest usually have very high accuracy and is natually suitable for factor variable. Therefore we chose random forest as our method. However, the average running time is very slow. 
+Model Selection: This project is to predict "Classe", which is a categorical factor. And we need a very high accuracy according to the [required model accuracy for Course project](https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-requiredModelAccuracy.md) and we want the out of sample error to be less than 0.01. Random forrest usually have very high accuracy and is natually suitable for factor variable. Therefore we chose random forest as our method. However, the average running time is very slow. 
 
 To help run the model, we used parellel library as discussed in the course forum. [Improving Performance of Random Forest in caret::train()](https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md). We also used a beep function to remind us when it finished and monitor the time it used.
 
@@ -119,7 +119,7 @@ confusionMatrix(testing$classe, pred)$overall['Accuracy']
 confusionMatrix(testing$classe, pred)
 ```
 
-The overall accuracy is about 0.9957.
+The overall accuracy is about 0.9957, the out of sample error is 0.0043, which is less than 0.01
 
 ##Apply this model to predict the new data
 Then we can use this model to predict the original pml-testing data. We need to do the same filtering for the this testing data too.
@@ -130,5 +130,8 @@ final_pred <- predict(modFit, final_testing)
 final_pred
 ```
 
+##Conclusion
+
+This model correctly predicted all the 20 testing cases.
 
 
