@@ -1,0 +1,134 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Zhengguo Chu"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+## Synopsis
+
+This study use the data from Groupware website. [http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har)
+The goal is to build a model to predict if participants perform barbell movement correctly or not. In this study, we chose random forest method and the result showed very good accuracy.
+
+## Data Processing
+
+### a). - Reading the Data:
+
+The first step is to read the data from csv. There are lots of empty cells, as well as special values like "NA" and "#DIV/0!", therefore we did some special handling when importing the data.
+
+```{r}
+pml_training <- read.csv(file = "pml-training.csv",
+                         header = TRUE, 
+                         sep = ",", 
+                         na.strings = c(""," ", "NA", "#DIV/0!", NA_character_)
+)
+
+
+pml_testing <- read.csv(file = "pml-testing.csv",
+                        header = TRUE, 
+                        sep = ",", 
+                        na.strings = c(""," ", "NA", "#DIV/0!", NA_character_)
+)
+```
+
+### b). - Clean the data
+From the raw data we noticed that there were many columns having lots of NA or empty values, therefore we cleaned the data and focused only to those columns with majority non-empty or non-NA values. We used 19000 as the threshold. We also noticed that the first 7 columns were just timestamps or sequence numbers, which were not useful in this particular case, thus we will filter those columns as well. The data were reduced to 53 columns.
+
+
+```{r}
+NA_Count <- sapply(pml_training, function(x) sum(length(which(is.na(x))))>19000) 
+NA_Count_T <- t(NA_Count)
+col <- colnames(NA_Count_T)[apply(NA_Count_T, 1, function(u) u == FALSE)]
+col <- col[8:60]
+training_clean <- subset(pml_training, select = col)
+dim(training_clean)
+```
+
+##Build the Model
+
+We used caret package to build the model. 
+
+Cross Validation: We split the original pml training data down to two parts: training and testing sets with p = 0.75. 
+
+```{r}
+library(caret)
+inTrain <- createDataPartition(training_clean$classe, p = 0.75, list = FALSE)
+training <- training_clean[inTrain, ]
+testing <- training_clean[-inTrain, ]
+```
+
+Model Selection: This project is to predict "Classe", which is a categorical factor. And we need a very high accuracy according to the [required model accuracy for Course project](https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-requiredModelAccuracy.md). Random forrest usually have very high accuracy and is natually suitable for factor variable. Therefore we chose random forest as our method. However, the average running time is very slow. 
+
+To help run the model, we used parellel library as discussed in the course forum. [Improving Performance of Random Forest in caret::train()](https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md). We also used a beep function to remind us when it finished and monitor the time it used.
+
+
+```{r}
+library(beepr)
+set.seed(1)
+fitControl <- trainControl(method = "cv",
+                           number = 10,
+                           allowParallel = TRUE
+)
+
+# Make Cluster
+library(parallel)
+library(doParallel)
+cluster <- makeCluster(detectCores()- 1)
+registerDoParallel(cluster)
+
+# Begin the timer
+ptm <- proc.time()
+
+# Fit the model
+modFit <- train(classe ~ ., 
+                data = training, 
+                method = "rf",
+                trainControl = fitControl
+                )
+
+# End the timer
+usedtime <- proc.time() - ptm
+
+# Stop Cluster 
+stopCluster(cluster)
+registerDoSEQ()
+
+# Issue Beep
+beep()
+```
+
+
+The total run time for building the random forest model is: 
+```{r}
+usedtime
+```
+
+The final model is as below:
+
+```{r}
+modFit
+```
+
+
+##Test the Model
+
+At this point we can use the put-aside testing data to validate the model.
+```{r}
+pred <- predict(modFit, newdata = testing)
+table(pred, testing$classe)
+confusionMatrix(testing$classe, pred)$overall['Accuracy']
+confusionMatrix(testing$classe, pred)
+```
+
+The overall accuracy is about 0.9957.
+
+##Apply this model to predict the new data
+Then we can use this model to predict the original pml-testing data. We need to do the same filtering for the this testing data too.
+```{r}
+pml_testing$classe <- NA
+final_testing <- subset(pml_testing, select = col)
+final_pred <- predict(modFit, final_testing)
+final_pred
+```
+
+
+
